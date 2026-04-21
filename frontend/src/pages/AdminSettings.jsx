@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import AdminNav from "../components/AdminNav";
 import { settingsApi } from "../api";
-import { Settings, Bell, Lock, Users, Save, Loader, CheckCircle, AlertCircle } from "lucide-react";
+import { Settings, Bell, Lock, Users, Save, Loader, CheckCircle, AlertCircle, Mail, Timer } from "lucide-react";
 
 const DEFAULT = {
   siteName: "Samadhan",
@@ -11,6 +11,8 @@ const DEFAULT = {
   autoAssign: true,
   maxResponseTime: 24,
   maintenanceMode: false,
+  slaWarnHours: 20,
+  slaBreachHours: 48,
 };
 
 export default function AdminSettings() {
@@ -19,7 +21,7 @@ export default function AdminSettings() {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState(null); // { type: "success"|"error", text }
+  const [msg, setMsg] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -85,6 +87,7 @@ export default function AdminSettings() {
           </div>
         ) : (
           <>
+            {/* General */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">General Settings</h2>
               <div className="space-y-5">
@@ -106,37 +109,114 @@ export default function AdminSettings() {
               </div>
             </div>
 
+            {/* Notifications */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-2">
                 <Bell size={24} className="text-teal-600" />
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">Notifications</h2>
               </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                Email notifications require SMTP credentials in the backend{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">.env</code> file
+                (<code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">SMTP_HOST</code>,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">SMTP_USER</code>,{" "}
+                <code className="bg-gray-100 dark:bg-gray-700 px-1 rounded">SMTP_PASS</code>).
+              </p>
               <div className="space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="emailNotifications" checked={settings.emailNotifications} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable email notifications for new tickets</span>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" name="emailNotifications" checked={settings.emailNotifications} onChange={handleChange}
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <Mail size={15} className="text-teal-600" />
+                      Email notifications for ticket events
+                    </span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Sends emails to students on ticket creation, status changes, new replies, and SLA alerts to admins.
+                    </p>
+                  </div>
                 </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="autoAssign" checked={settings.autoAssign} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Auto-assign tickets to available admins</span>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" name="autoAssign" checked={settings.autoAssign} onChange={handleChange}
+                    className="mt-0.5 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
+                  <div>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Auto-assign tickets to available admins</span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Automatically routes new tickets to the first available admin.
+                    </p>
+                  </div>
                 </label>
               </div>
             </div>
 
+            {/* SLA Tracking */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <Timer size={24} className="text-teal-600" />
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">SLA Tracking</h2>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+                The SLA monitor runs in the background and alerts admins when tickets are taking too long to resolve.
+                Alerts appear as in-app notifications and emails (if SMTP is configured).
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Warning threshold (hours)
+                  </label>
+                  <input type="number" name="slaWarnHours" value={settings.slaWarnHours} onChange={handleChange}
+                    min="1" max="168"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Admins get a ⏰ warning notification after this many hours with no resolution.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Breach threshold (hours)
+                  </label>
+                  <input type="number" name="slaBreachHours" value={settings.slaBreachHours} onChange={handleChange}
+                    min="1" max="720"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Admins get a ⚠️ breach alert after this many hours — SLA is considered violated.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <AlertCircle size={15} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-yellow-800 dark:text-yellow-300">
+                  Changes take effect on the next check cycle (every 5 minutes).
+                  Tickets that already triggered an alert won't re-alert unless they are re-opened.
+                </p>
+              </div>
+            </div>
+
+            {/* System */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
               <div className="flex items-center gap-3 mb-6">
                 <Lock size={24} className="text-teal-600" />
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">System</h2>
               </div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" name="maintenanceMode" checked={settings.maintenanceMode} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable maintenance mode</span>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" name="maintenanceMode" checked={settings.maintenanceMode} onChange={handleChange}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
+                <div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Enable maintenance mode</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Students will see a maintenance notice when this is on.
+                  </p>
+                </div>
               </label>
               {settings.maintenanceMode && (
-                <p className="mt-2 ml-7 text-xs text-orange-600 font-medium">⚠ Maintenance mode is ON — students will see a maintenance page.</p>
+                <div className="mt-3 ml-7 flex items-center gap-2 text-xs text-orange-600 font-medium bg-orange-50 dark:bg-orange-900/20 px-3 py-2 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <AlertCircle size={14} />
+                  Maintenance mode is ON — students will see a maintenance page.
+                </div>
               )}
             </div>
 
+            {/* Admin Users */}
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
               <div className="flex items-center gap-3 mb-6">
                 <Users size={24} className="text-teal-600" />

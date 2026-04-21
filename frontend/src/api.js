@@ -109,6 +109,18 @@ export const settingsApi = {
   getAdmins: () => request("/api/settings/admins"),
 };
 
+// ── FAQ ───────────────────────────────────────────────────────────────────────
+
+export const faqApi = {
+  search: (q, category = null) => {
+    const params = new URLSearchParams({ q, limit: 3 });
+    if (category) params.append("category", category);
+    return fetch(`${BASE_URL}/api/faq/search?${params}`)
+      .then((r) => r.json())
+      .catch(() => ({ faqs: [] }));
+  },
+};
+
 // ── WebSocket helper ──────────────────────────────────────────────────────────
 
 const WS_BASE = (process.env.REACT_APP_API_URL || "http://localhost:8000")

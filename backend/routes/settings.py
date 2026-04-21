@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Header
 from database import get_db
 from firebase_admin import auth as firebase_auth
 from datetime import datetime
+import os
 
 router = APIRouter()
 
@@ -12,6 +13,8 @@ DEFAULT_SETTINGS = {
     "autoAssign": True,
     "maxResponseTime": 24,
     "maintenanceMode": False,
+    "slaWarnHours": 20,
+    "slaBreachHours": 48,
 }
 
 
@@ -32,17 +35,28 @@ def require_admin(decoded_token: dict, db):
     return user
 
 
+def get_settings_doc(db) -> dict:
+    """Return current settings, falling back to defaults."""
+    doc = db.settings.find_one({"_id": "global"})
+    if not doc:
+        return dict(DEFAULT_SETTINGS)
+    doc.pop("_id", None)
+    doc.pop("updated_at", None)
+    return {**DEFAULT_SETTINGS, **doc}
+
+
+def email_notifications_enabled(db) -> bool:
+    """Quick helper used by other routes to check the toggle."""
+    return get_settings_doc(db).get("emailNotifications", True)
+
+
 @router.get("/")
 async def get_settings(
     decoded_token: dict = Depends(verify_firebase_token),
     db=Depends(get_db),
 ):
     require_admin(decoded_token, db)
-    doc = db.settings.find_one({"_id": "global"})
-    if not doc:
-        return DEFAULT_SETTINGS
-    doc.pop("_id", None)
-    return doc
+    return get_settings_doc(db)
 
 
 @router.patch("/")
@@ -65,10 +79,7 @@ async def update_settings(
         {"$set": update},
         upsert=True,
     )
-    doc = db.settings.find_one({"_id": "global"})
-    doc.pop("_id", None)
-    doc.pop("updated_at", None)
-    return doc
+    return get_settings_doc(db)
 
 
 @router.get("/admins")

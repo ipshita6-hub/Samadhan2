@@ -2,19 +2,16 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ticketsApi, createTicketSocket } from "../api";
-import { formatDate, formatDateTime, formatDateOnly } from "../utils/formatDate";
+import { formatDate } from "../utils/formatDate";
+import ThemeToggle from "../components/ThemeToggle";
 import {
   ArrowLeft,
-  ThumbsUp,
-  ThumbsDown,
   Send,
   Loader,
   AlertCircle,
   CheckCircle,
-  MessageSquare,
   XCircle,
   RotateCcw,
-  RefreshCw,
   Paperclip,
   Download,
   Trash2,
@@ -26,17 +23,17 @@ import {
 } from "lucide-react";
 
 const STATUS_COLORS = {
-  open: "bg-yellow-100 text-yellow-800",
-  in_progress: "bg-blue-100 text-blue-800",
-  resolved: "bg-green-100 text-green-800",
-  closed: "bg-gray-100 text-gray-800",
+  open: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  in_progress: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  resolved: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  closed: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
 };
 
 const PRIORITY_COLORS = {
-  low: "bg-blue-100 text-blue-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  high: "bg-red-100 text-red-800",
-  urgent: "bg-purple-100 text-purple-800",
+  low: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  high: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  urgent: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
 };
 
 function getInitials(name) {
@@ -55,7 +52,6 @@ export default function TicketDetails() {
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [helpful, setHelpful] = useState(null);
   const [actionLoading, setActionLoading] = useState(null); // "close" | "reopen"
   const [actionMsg, setActionMsg] = useState(null);
   // Optimistic comments — shown immediately before server refresh
@@ -259,7 +255,7 @@ export default function TicketDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <Loader size={40} className="mx-auto animate-spin text-teal-500 mb-3" />
           <p className="text-gray-500">Loading ticket...</p>
@@ -270,7 +266,7 @@ export default function TicketDetails() {
 
   if (error || !ticket) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle size={40} className="mx-auto text-red-400 mb-3" />
           <p className="text-red-600 font-medium">{error || "Ticket not found"}</p>
@@ -282,8 +278,6 @@ export default function TicketDetails() {
     );
   }
 
-  // Separate admin replies from student comments
-  const adminComments = (ticket.comments || []).filter((c) => c.author_role === "admin");
   const allComments = [...(ticket.comments || []), ...optimisticComments];
 
   // Build a simple timeline from ticket data
@@ -302,29 +296,30 @@ export default function TicketDetails() {
   const canReopen = ["resolved", "closed"].includes(ticket.status);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <button onClick={() => navigate("/my-tickets")} className="p-2 hover:bg-gray-100 rounded-lg transition">
-                <ArrowLeft size={20} className="text-gray-600" />
+              <button onClick={() => navigate("/my-tickets")} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+                <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
               </button>
               <div>
                 <p className="text-sm text-teal-600 font-medium">
                   Dashboard / My Tickets / #{ticket.id.slice(-6).toUpperCase()}
                 </p>
-                <h1 className="text-3xl font-bold text-gray-900 mt-1">Ticket Details</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">Ticket Details</h1>
               </div>
             </div>
             {/* Close / Reopen actions */}
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               {canReopen && (
                 <button
                   onClick={handleReopen}
                   disabled={actionLoading === "reopen"}
-                  className="flex items-center gap-2 px-4 py-2 border border-teal-300 text-teal-700 hover:bg-teal-50 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 border border-teal-300 text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg text-sm font-medium transition disabled:opacity-50"
                 >
                   {actionLoading === "reopen"
                     ? <Loader size={15} className="animate-spin" />
@@ -367,13 +362,13 @@ export default function TicketDetails() {
           {/* Left Column */}
           <div className="col-span-2 space-y-6">
             {/* Ticket Header */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <p className="text-sm text-gray-500 mb-2">
                     #{ticket.id.slice(-6).toUpperCase()} · Submitted {formatDate(ticket.created_at)}
                   </p>
-                  <h2 className="text-2xl font-bold text-gray-900">{ticket.title}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{ticket.title}</h2>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-semibold capitalize ${STATUS_COLORS[ticket.status]}`}>
                   {ticket.status.replace("_", " ")}
@@ -392,15 +387,15 @@ export default function TicketDetails() {
             </div>
 
             {/* Description */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
-              <p className="text-gray-700 whitespace-pre-line leading-relaxed">{ticket.description}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Description</h3>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{ticket.description}</p>
             </div>
 
             {/* Attachments */}
             {ticket.attachments && ticket.attachments.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                   <Paperclip size={18} />
                   Attachments ({ticket.attachments.length})
                 </h3>
@@ -409,14 +404,14 @@ export default function TicketDetails() {
                     const isImage = att.content_type?.startsWith("image/");
                     const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
                     return (
-                      <div key={att.file_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 group">
+                      <div key={att.file_id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 group">
                         <div className="flex items-center gap-3 min-w-0">
                           {isImage
                             ? <Image size={18} className="text-teal-500 flex-shrink-0" />
                             : <FileText size={18} className="text-gray-400 flex-shrink-0" />}
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{att.filename}</p>
-                            <p className="text-xs text-gray-400">{att.size ? `${(att.size / 1024).toFixed(1)} KB` : ""}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{att.filename}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">{att.size ? `${(att.size / 1024).toFixed(1)} KB` : ""}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -452,9 +447,9 @@ export default function TicketDetails() {
 
             {/* Conversation */}
             {allComments.length > 0 && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     Conversation ({(ticket.comments || []).length})
                   </h3>
                   <span className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${wsConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
@@ -481,21 +476,21 @@ export default function TicketDetails() {
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
                             <div>
-                              <span className="font-semibold text-gray-900 text-sm">{comment.author_name}</span>
+                              <span className="font-semibold text-gray-900 dark:text-white text-sm">{comment.author_name}</span>
                               <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                                comment.author_role === "admin" ? "bg-teal-100 text-teal-700" : "bg-gray-100 text-gray-600"
+                                comment.author_role === "admin" ? "bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                               }`}>
                                 {isTemp ? "sending…" : comment.author_role}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-gray-500">{formatDate(comment.created_at)}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(comment.created_at)}</span>
                               {/* Emoji picker trigger */}
                               {!isTemp && (
                                 <div className="relative">
                                   <button
                                     onClick={() => setEmojiPickerFor(emojiPickerFor === comment.id ? null : comment.id)}
-                                    className="opacity-0 group-hover/msg:opacity-100 transition p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+                                    className="opacity-0 group-hover/msg:opacity-100 transition p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-gray-600"
                                     title="React"
                                   >
                                     <Smile size={14} />
@@ -503,13 +498,13 @@ export default function TicketDetails() {
                                   {emojiPickerFor === comment.id && (
                                     <div
                                       ref={emojiPickerRef}
-                                      className="absolute right-0 top-7 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-2 flex gap-1"
+                                      className="absolute right-0 top-7 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-2 flex gap-1"
                                     >
                                       {EMOJIS.map((emoji) => (
                                         <button
                                           key={emoji}
                                           onClick={() => handleReact(comment.id, emoji)}
-                                          className="text-lg hover:scale-125 transition-transform p-1 rounded hover:bg-gray-100"
+                                          className="text-lg hover:scale-125 transition-transform p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                                         >
                                           {emoji}
                                         </button>
@@ -520,7 +515,7 @@ export default function TicketDetails() {
                               )}
                             </div>
                           </div>
-                          <p className="text-gray-700 text-sm whitespace-pre-line leading-relaxed">{comment.text}</p>
+                          <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-line leading-relaxed">{comment.text}</p>
 
                           {/* Reaction bubbles */}
                           {Object.keys(commentReactions).length > 0 && (
@@ -554,10 +549,10 @@ export default function TicketDetails() {
 
             {/* Reply Box / Status Banner */}
             {ticket.status === "closed" ? (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 text-center">
                 <XCircle size={28} className="mx-auto text-gray-400 mb-2" />
-                <p className="text-gray-600 font-medium">This ticket is closed.</p>
-                <p className="text-gray-500 text-sm mt-1">If your issue persists, reopen it or create a new ticket.</p>
+                <p className="text-gray-600 dark:text-gray-300 font-medium">This ticket is closed.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">If your issue persists, reopen it or create a new ticket.</p>
                 <button
                   onClick={handleReopen}
                   disabled={actionLoading === "reopen"}
@@ -576,15 +571,15 @@ export default function TicketDetails() {
                     <p className="text-green-700 text-xs mt-0.5">Still having issues? Add a reply below and we'll reopen it.</p>
                   </div>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <h3 className="text-base font-semibold text-gray-900 mb-3">Still need help?</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Still need help?</h3>
                   <form onSubmit={handleSubmitReply}>
                     <textarea
                       value={reply}
                       onChange={(e) => setReply(e.target.value)}
                       placeholder="Describe the ongoing issue..."
                       rows="3"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none text-sm"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none text-sm"
                       disabled={submitting}
                     />
                     {submitError && <p className="text-red-600 text-xs mt-1">{submitError}</p>}
@@ -602,15 +597,15 @@ export default function TicketDetails() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Add a Reply</h3>
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Add a Reply</h3>
                 <form onSubmit={handleSubmitReply}>
                   <textarea
                     value={reply}
                     onChange={(e) => setReply(e.target.value)}
                     placeholder="Type your message here..."
                     rows="4"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                     disabled={submitting}
                   />
                   {submitError && <p className="text-red-600 text-sm mt-2">{submitError}</p>}
@@ -632,55 +627,55 @@ export default function TicketDetails() {
           {/* Right Sidebar */}
           <div className="col-span-1 space-y-6">
             {/* Ticket Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Ticket Info</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Ticket Info</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Status</span>
+                  <span className="text-gray-500 dark:text-gray-400">Status</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[ticket.status]}`}>
                     {ticket.status.replace("_", " ")}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Priority</span>
+                  <span className="text-gray-500 dark:text-gray-400">Priority</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${PRIORITY_COLORS[ticket.priority]}`}>
                     {ticket.priority}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Category</span>
-                  <span className="text-gray-900">{ticket.category}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Category</span>
+                  <span className="text-gray-900 dark:text-white">{ticket.category}</span>
                 </div>
                 {ticket.course && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Course</span>
-                    <span className="text-gray-900">{ticket.course.split(" - ")[0]}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Course</span>
+                    <span className="text-gray-900 dark:text-white">{ticket.course.split(" - ")[0]}</span>
                   </div>
                 )}
                 {ticket.assigned_to && (
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Assigned to</span>
-                    <span className="text-gray-900">{ticket.assigned_to}</span>
+                    <span className="text-gray-500 dark:text-gray-400">Assigned to</span>
+                    <span className="text-gray-900 dark:text-white">{ticket.assigned_to}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Replies</span>
-                  <span className="text-gray-900">{allComments.length}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Replies</span>
+                  <span className="text-gray-900 dark:text-white">{allComments.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Created</span>
-                  <span className="text-gray-900">{formatDate(ticket.created_at)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Created</span>
+                  <span className="text-gray-900 dark:text-white">{formatDate(ticket.created_at)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Updated</span>
-                  <span className="text-gray-900">{formatDate(ticket.updated_at)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Updated</span>
+                  <span className="text-gray-900 dark:text-white">{formatDate(ticket.updated_at)}</span>
                 </div>
               </div>
             </div>
 
             {/* Activity Timeline */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Activity Timeline</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Activity Timeline</h3>
               <div className="space-y-4">
                 {timeline.map((event, idx) => (
                   <div key={idx} className="flex gap-3">
@@ -692,13 +687,13 @@ export default function TicketDetails() {
                         : "bg-green-500"
                       }`} />
                       {idx < timeline.length - 1 && (
-                        <div className="w-0.5 h-8 bg-gray-200 mt-1" />
+                        <div className="w-0.5 h-8 bg-gray-200 dark:bg-gray-700 mt-1" />
                       )}
                     </div>
                     <div className="pb-2">
-                      <p className="font-medium text-gray-900 text-sm">{event.title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{event.description}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{formatDate(event.time)}</p>
+                      <p className="font-medium text-gray-900 dark:text-white text-sm">{event.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{event.description}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{formatDate(event.time)}</p>
                     </div>
                   </div>
                 ))}
@@ -706,25 +701,25 @@ export default function TicketDetails() {
             </div>
 
             {/* Student Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">Your Account</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Your Account</h3>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center font-semibold text-sm">
                   {getInitials(ticket.student_name)}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900 text-sm">{ticket.student_name || "You"}</p>
-                  <p className="text-xs text-gray-500">{ticket.student_email}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm">{ticket.student_name || "You"}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{ticket.student_email}</p>
                 </div>
               </div>
-              <div className="space-y-2 pt-3 border-t border-gray-200 text-sm">
+              <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-700 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Total Tickets</span>
-                  <span className="font-semibold text-gray-900">{ticket.student_total_tickets ?? "—"}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Total Tickets</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{ticket.student_total_tickets ?? "—"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Open Tickets</span>
-                  <span className="font-semibold text-gray-900">{ticket.student_open_tickets ?? "—"}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Open Tickets</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{ticket.student_open_tickets ?? "—"}</span>
                 </div>
               </div>
             </div>
@@ -734,3 +729,4 @@ export default function TicketDetails() {
     </div>
   );
 }
+

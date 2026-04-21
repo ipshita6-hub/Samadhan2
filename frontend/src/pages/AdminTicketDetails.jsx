@@ -3,22 +3,22 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminNav from "../components/AdminNav";
 import { ticketsApi, createTicketSocket } from "../api";
-import { formatDate, formatDateTime, formatDateOnly } from "../utils/formatDate";
+import { formatDateTime, formatDateOnly } from "../utils/formatDate";
 import {
-  ArrowLeft, Send, CheckCircle, User, Paperclip, Lock, Smile, Wifi, WifiOff,
+  ArrowLeft, Send, CheckCircle, Lock, Smile, Wifi, WifiOff,
 } from "lucide-react";
 
 const STATUS_COLOR = {
-  open: "bg-blue-100 text-blue-800",
-  in_progress: "bg-yellow-100 text-yellow-800",
-  resolved: "bg-green-100 text-green-800",
-  closed: "bg-gray-100 text-gray-800",
+  open: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  in_progress: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  resolved: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  closed: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
 };
 const PRIORITY_COLOR = {
-  high: "bg-red-100 text-red-800",
-  urgent: "bg-red-200 text-red-900",
-  medium: "bg-yellow-100 text-yellow-800",
-  low: "bg-blue-100 text-blue-800",
+  high: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  urgent: "bg-red-200 text-red-900 dark:bg-red-900/60 dark:text-red-200",
+  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  low: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
 };
 
 export default function AdminTicketDetails() {
@@ -64,7 +64,7 @@ export default function AdminTicketDetails() {
     }
   }
 
-  useEffect(() => { loadTicket(); }, [ticketId]);
+  useEffect(() => { loadTicket(); }, [ticketId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // WebSocket for real-time updates
   useEffect(() => {
@@ -181,31 +181,31 @@ export default function AdminTicketDetails() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <AdminNav user={user} />
-      <div className="max-w-6xl mx-auto px-6 py-16 text-center text-gray-500">Loading ticket...</div>
+      <div className="max-w-6xl mx-auto px-6 py-16 text-center text-gray-500 dark:text-gray-400">Loading ticket...</div>
     </div>
   );
 
   if (error) return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <AdminNav user={user} />
-      <div className="max-w-6xl mx-auto px-6 py-16 text-center text-red-600">{error}</div>
+      <div className="max-w-6xl mx-auto px-6 py-16 text-center text-red-600 dark:text-red-400">{error}</div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <AdminNav user={user} />
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <button onClick={() => navigate("/admin/tickets")} className="p-2 hover:bg-gray-100 rounded-lg transition">
-            <ArrowLeft size={20} className="text-gray-600" />
+          <button onClick={() => navigate("/admin/tickets")} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+            <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
           <div>
             <p className="text-sm text-teal-600 font-medium">Admin / Tickets / {ticket.id.slice(-10).toUpperCase()}</p>
-            <h1 className="text-3xl font-bold text-gray-900 mt-1">Ticket Details</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mt-1">Ticket Details</h1>
           </div>
         </div>
 
@@ -219,32 +219,32 @@ export default function AdminTicketDetails() {
           {/* Main */}
           <div className="col-span-2 space-y-6">
             {/* Ticket header */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
               <div className="flex items-start justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900 flex-1 pr-4">{ticket.title}</h2>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold flex-shrink-0 ${STATUS_COLOR[ticket.status] || "bg-gray-100 text-gray-800"}`}>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex-1 pr-4">{ticket.title}</h2>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold flex-shrink-0 ${STATUS_COLOR[ticket.status] || "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"}`}>
                   {ticket.status.replace("_", " ")}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${PRIORITY_COLOR[ticket.priority] || "bg-gray-100 text-gray-800"}`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${PRIORITY_COLOR[ticket.priority] || "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"}`}>
                   {ticket.priority}
                 </span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">{ticket.category}</span>
-                <span className="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-mono">{ticket.id.slice(-10).toUpperCase()}</span>
+                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-xs font-semibold">{ticket.category}</span>
+                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-full text-xs font-mono">{ticket.id.slice(-10).toUpperCase()}</span>
               </div>
             </div>
 
             {/* Description */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Description</h3>
-              <p className="text-gray-700 whitespace-pre-line leading-relaxed">{ticket.description}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Description</h3>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{ticket.description}</p>
             </div>
 
             {/* Conversation */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Conversation ({ticket.comments?.length || 0})
                 </h3>
                 <span className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full ${wsConnected ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-400"}`}>
@@ -261,27 +261,27 @@ export default function AdminTicketDetails() {
                   const uid = user?.uid;
                   return (
                     <div key={c.id} className={`flex gap-4 group/msg ${c.is_internal ? "opacity-80" : ""}`}>
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${c.author_role === "admin" ? "bg-teal-500 text-white" : "bg-gray-300 text-gray-700"}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${c.author_role === "admin" ? "bg-teal-500 text-white" : "bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200"}`}>
                         {c.author_name?.charAt(0)?.toUpperCase() || "?"}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold text-gray-900 text-sm">{c.author_name}</p>
-                            <span className="text-xs text-gray-500 capitalize">{c.author_role}</span>
+                            <p className="font-semibold text-gray-900 dark:text-white text-sm">{c.author_name}</p>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{c.author_role}</span>
                             {c.is_internal && (
-                              <span className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
+                              <span className="flex items-center gap-1 text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded-full">
                                 <Lock size={10} /> Internal note
                               </span>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-400">{formatDateTime(c.created_at)}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{formatDateTime(c.created_at)}</span>
                             {/* Emoji picker trigger */}
                             <div className="relative">
                               <button
                                 onClick={() => setEmojiPickerFor(emojiPickerFor === c.id ? null : c.id)}
-                                className="opacity-0 group-hover/msg:opacity-100 transition p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
+                                className="opacity-0 group-hover/msg:opacity-100 transition p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-gray-600"
                                 title="React"
                               >
                                 <Smile size={14} />
@@ -289,13 +289,13 @@ export default function AdminTicketDetails() {
                               {emojiPickerFor === c.id && (
                                 <div
                                   ref={emojiPickerRef}
-                                  className="absolute right-0 top-7 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-2 flex gap-1"
+                                  className="absolute right-0 top-7 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg p-2 flex gap-1"
                                 >
                                   {EMOJIS.map((emoji) => (
                                     <button
                                       key={emoji}
                                       onClick={() => handleReact(c.id, emoji)}
-                                      className="text-lg hover:scale-125 transition-transform p-1 rounded hover:bg-gray-100"
+                                      className="text-lg hover:scale-125 transition-transform p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                                     >
                                       {emoji}
                                     </button>
@@ -305,7 +305,7 @@ export default function AdminTicketDetails() {
                             </div>
                           </div>
                         </div>
-                        <div className={`p-3 rounded-lg text-sm text-gray-700 ${c.is_internal ? "bg-yellow-50 border border-yellow-200" : c.author_role === "admin" ? "bg-teal-50 border border-teal-200" : "bg-gray-50 border border-gray-200"}`}>
+                        <div className={`p-3 rounded-lg text-sm text-gray-700 dark:text-gray-300 ${c.is_internal ? "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800" : c.author_role === "admin" ? "bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800" : "bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600"}`}>
                           {c.text}
                         </div>
                         {/* Reaction bubbles */}
@@ -336,10 +336,10 @@ export default function AdminTicketDetails() {
               </div>
 
               {/* Reply form */}
-              <form onSubmit={handleSendReply} className="border-t border-gray-200 pt-6">
+              <form onSubmit={handleSendReply} className="border-t border-gray-200 dark:border-gray-700 pt-6">
                 <div className="flex items-center gap-4 mb-3">
-                  <label className="text-sm font-medium text-gray-700">Add Reply</label>
-                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Add Reply</label>
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 dark:text-gray-400">
                     <input
                       type="checkbox"
                       checked={isInternal}
@@ -355,7 +355,7 @@ export default function AdminTicketDetails() {
                   onChange={(e) => setReply(e.target.value)}
                   placeholder={isInternal ? "Write an internal note (not visible to student)..." : "Type your response here..."}
                   rows="4"
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none ${isInternal ? "border-yellow-300 focus:ring-yellow-400 bg-yellow-50" : "border-gray-300 focus:ring-teal-500"}`}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none text-gray-900 dark:text-white ${isInternal ? "border-yellow-300 focus:ring-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700" : "border-gray-300 dark:border-gray-600 focus:ring-teal-500 bg-white dark:bg-gray-700"}`}
                 />
                 <div className="flex justify-end mt-3">
                   <button
@@ -374,43 +374,43 @@ export default function AdminTicketDetails() {
           {/* Sidebar */}
           <div className="col-span-1 space-y-6">
             {/* Student info */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Student</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Student</h3>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center font-semibold">
                   {ticket.student_name?.charAt(0)?.toUpperCase() || "?"}
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">{ticket.student_name || "Unknown"}</p>
-                  <p className="text-sm text-gray-500">{ticket.student_email || ""}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{ticket.student_name || "Unknown"}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{ticket.student_email || ""}</p>
                 </div>
               </div>
-              <div className="space-y-2 text-sm border-t border-gray-100 pt-4">
+              <div className="space-y-2 text-sm border-t border-gray-100 dark:border-gray-700 pt-4">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Total Tickets</span>
-                  <span className="font-semibold">{ticket.student_total_tickets ?? "—"}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Total Tickets</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{ticket.student_total_tickets ?? "—"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Open Tickets</span>
-                  <span className="font-semibold">{ticket.student_open_tickets ?? "—"}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Open Tickets</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{ticket.student_open_tickets ?? "—"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Submitted</span>
-                  <span className="font-semibold">{formatDateOnly(ticket.created_at)}</span>
+                  <span className="text-gray-500 dark:text-gray-400">Submitted</span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatDateOnly(ticket.created_at)}</span>
                 </div>
               </div>
             </div>
 
             {/* Update status & assignment */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Manage Ticket</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Manage Ticket</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
@@ -419,13 +419,13 @@ export default function AdminTicketDetails() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assign To</label>
                   <input
                     type="text"
                     value={assignedTo}
                     onChange={(e) => setAssignedTo(e.target.value)}
                     placeholder="Admin name..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
                 <button
@@ -439,27 +439,27 @@ export default function AdminTicketDetails() {
             </div>
 
             {/* Quick actions */}
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => handleQuickAction("resolved")}
                   disabled={saving || ticket.status === "resolved"}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition text-sm font-medium disabled:opacity-40"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-green-300 dark:border-green-700 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition text-sm font-medium disabled:opacity-40"
                 >
                   <CheckCircle size={16} /> Mark as Resolved
                 </button>
                 <button
                   onClick={() => handleQuickAction("in_progress")}
                   disabled={saving || ticket.status === "in_progress"}
-                  className="w-full px-4 py-2 border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50 transition text-sm font-medium disabled:opacity-40"
+                  className="w-full px-4 py-2 border border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition text-sm font-medium disabled:opacity-40"
                 >
                   Set In Progress
                 </button>
                 <button
                   onClick={() => handleQuickAction("closed")}
                   disabled={saving || ticket.status === "closed"}
-                  className="w-full px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition text-sm font-medium disabled:opacity-40"
+                  className="w-full px-4 py-2 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm font-medium disabled:opacity-40"
                 >
                   Close Ticket
                 </button>

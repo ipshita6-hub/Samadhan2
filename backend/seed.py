@@ -187,6 +187,10 @@ for t in tickets_raw:
     hrs = random.randint(0, 8)
     created = now - timedelta(days=t["days_ago"], hours=hrs)
     updated = created + timedelta(hours=random.randint(1, 6))
+    # Set resolved_at for resolved/closed tickets (used by resolution time analytics)
+    resolved_at = None
+    if t["status"] in ("resolved", "closed"):
+        resolved_at = created + timedelta(hours=random.randint(4, 36))
     doc = {
         "user_id": user_oid,
         "title": t["title"],
@@ -197,6 +201,7 @@ for t in tickets_raw:
         "status": t["status"],
         "assigned_to": t["assigned_to"],
         "comment_count": 0,
+        "resolved_at": resolved_at,
         "created_at": created,
         "updated_at": updated,
     }

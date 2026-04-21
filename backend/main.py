@@ -39,13 +39,20 @@ os.makedirs(UPLOADS_DIR, exist_ok=True)
 # Serve uploaded files statically
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
-from routes import tickets, auth, settings as settings_router
+from routes import tickets, auth, settings as settings_router, faq as faq_router
 from routes.websocket import manager
+from services.sla_service import start_sla_monitor
 
 # Routes
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(tickets.router, prefix="/api/tickets", tags=["tickets"])
 app.include_router(settings_router.router, prefix="/api/settings", tags=["settings"])
+app.include_router(faq_router.router, prefix="/api/faq", tags=["faq"])
+
+
+@app.on_event("startup")
+async def startup_event():
+    start_sla_monitor()
 
 
 # ── WebSocket endpoint ────────────────────────────────────────────────────────

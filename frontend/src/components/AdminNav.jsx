@@ -1,9 +1,10 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Ticket, BarChart3, Settings, Bell, LogOut } from "lucide-react";
+import { LayoutDashboard, Ticket, BarChart3, Settings, LogOut } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import ThemeToggle from "./ThemeToggle";
+import NotificationBell from "./NotificationBell";
 
 export default function AdminNav({ user }) {
   const navigate = useNavigate();
@@ -60,10 +61,7 @@ export default function AdminNav({ user }) {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button className="p-2 hover:bg-gray-800 rounded-lg transition relative">
-              <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            <NotificationBell buttonClassName="hover:bg-gray-800 text-gray-300 hover:text-white" ticketBasePath="/admin/ticket" />
             <div className="flex items-center gap-3 pl-3 border-l border-gray-700">
               <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center font-semibold text-sm">
                 {userInitials}

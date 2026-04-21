@@ -4,20 +4,20 @@ import { useAuth } from "../context/AuthContext";
 import AdminNav from "../components/AdminNav";
 import { ticketsApi } from "../api";
 import {
-  Search, ChevronLeft, ChevronRight, MessageSquare, User, RefreshCw,
+  Search, ChevronLeft, ChevronRight, User, RefreshCw,
 } from "lucide-react";
 
 const STATUS_COLOR = {
-  open: "bg-blue-100 text-blue-800",
-  in_progress: "bg-yellow-100 text-yellow-800",
-  resolved: "bg-green-100 text-green-800",
-  closed: "bg-gray-100 text-gray-800",
+  open: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  in_progress: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  resolved: "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  closed: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
 };
 const PRIORITY_COLOR = {
-  high: "bg-red-100 text-red-800",
-  urgent: "bg-red-200 text-red-900",
-  medium: "bg-yellow-100 text-yellow-800",
-  low: "bg-blue-100 text-blue-800",
+  high: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  urgent: "bg-red-200 text-red-900 dark:bg-red-900/60 dark:text-red-200",
+  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  low: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
 };
 
 export default function AdminTickets() {

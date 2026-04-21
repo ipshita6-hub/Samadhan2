@@ -10,6 +10,12 @@ import os
 import uuid
 import shutil
 from services.ai_service import analyze_ticket
+from services.email_service import (
+    send_ticket_created,
+    send_status_update,
+    send_new_reply,
+)
+from routes.settings import email_notifications_enabled
 
 router = APIRouter()
 
@@ -142,13 +148,14 @@ async def create_ticket(
         "comment_count": 0,
         "attachments": [],
         "ai_analysis": ai,
+        "resolved_at": None,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
     }
     result = db.tickets.insert_one(ticket_doc)
     ticket_id = str(result.inserted_id)
 
-    # Notify admins of new ticket
+    # Notify admins of new ticket (in-app)
     admins = list(db.users.find({"role": "admin"}, {"_id": 1}))
     for admin in admins:
         create_notification(
@@ -159,6 +166,12 @@ async def create_ticket(
             message=f"New ticket submitted by {user.get('full_name') or user.get('email')}: \"{ticket.title}\"",
             notif_type="new_ticket",
         )
+
+    # Send confirmation email to student
+    student_email = user.get("email", "")
+    student_name = user.get("full_name") or user.get("email", "Student")
+    if student_email and email_notifications_enabled(db):
+        send_ticket_created(student_email, student_name, ticket_id, ticket.title)
 
     return {"id": ticket_id, "message": "Ticket created successfully", "ai_analysis": ai}
 
@@ -273,6 +286,36 @@ async def get_admin_stats(
 
     resolution_rate = round((resolved / total * 100) if total > 0 else 0, 1)
 
+    # ── Resolution time analytics ─────────────────────────────────────────────
+    # Average hours from created_at → resolved_at for resolved/closed tickets
+    resolved_tickets = list(db.tickets.find(
+        {"status": {"$in": ["resolved", "closed"]}, "resolved_at": {"$ne": None}},
+        {"created_at": 1, "resolved_at": 1}
+    ))
+
+    avg_resolution_hours = None
+    resolution_time_distribution = {"under_1h": 0, "1_to_24h": 0, "1_to_3d": 0, "over_3d": 0}
+
+    if resolved_tickets:
+        durations = []
+        for t in resolved_tickets:
+            try:
+                delta = t["resolved_at"] - t["created_at"]
+                hours = delta.total_seconds() / 3600
+                durations.append(hours)
+                if hours < 1:
+                    resolution_time_distribution["under_1h"] += 1
+                elif hours <= 24:
+                    resolution_time_distribution["1_to_24h"] += 1
+                elif hours <= 72:
+                    resolution_time_distribution["1_to_3d"] += 1
+                else:
+                    resolution_time_distribution["over_3d"] += 1
+            except Exception:
+                pass
+        if durations:
+            avg_resolution_hours = round(sum(durations) / len(durations), 1)
+
     return {
         "total": total,
         "open": open_count,
@@ -283,6 +326,8 @@ async def get_admin_stats(
         "by_category": categories,
         "by_priority": priorities,
         "top_students": top_students,
+        "avg_resolution_hours": avg_resolution_hours,
+        "resolution_time_distribution": resolution_time_distribution,
     }
 
 # ─── Notifications (must be before /{ticket_id} to avoid route conflict) ──────
@@ -549,6 +594,13 @@ async def update_ticket(
 
     update_data = {k: v for k, v in update.dict().items() if v is not None}
     update_data["updated_at"] = datetime.utcnow()
+
+    # Track resolved_at timestamp for resolution time analytics
+    if update.status == "resolved" and ticket.get("status") != "resolved":
+        update_data["resolved_at"] = datetime.utcnow()
+    elif update.status in ("open", "in_progress") and ticket.get("resolved_at"):
+        update_data["resolved_at"] = None  # reset if re-opened by admin
+
     db.tickets.update_one({"_id": ObjectId(ticket_id)}, {"$set": update_data})
 
     # Notify student if status changed
@@ -562,6 +614,20 @@ async def update_ticket(
             message=f"Your ticket \"{ticket.get('title', '')}\" status changed to {status_label}.",
             notif_type="status_change",
         )
+        # Send status-change email to student
+        try:
+            student = db.users.find_one({"_id": ObjectId(ticket["user_id"])})
+            if student and student.get("email") and email_notifications_enabled(db):
+                send_status_update(
+                    to=student["email"],
+                    student_name=student.get("full_name") or student.get("email", "Student"),
+                    ticket_id=ticket_id,
+                    ticket_title=ticket.get("title", ""),
+                    new_status=update.status,
+                    admin_name=admin.get("full_name") or admin.get("email"),
+                )
+        except Exception:
+            pass
         # Broadcast status change via WebSocket
         from routes.websocket import manager
         import asyncio
@@ -621,7 +687,7 @@ async def add_comment(
 
     # Notify the other party
     if user["role"] == "admin" and not is_internal:
-        # Admin replied → notify student
+        # Admin replied → notify student (in-app + email)
         create_notification(
             db,
             user_id=ticket["user_id"],
@@ -630,8 +696,22 @@ async def add_comment(
             message=f"{user.get('full_name') or 'Support'} replied to your ticket: \"{ticket.get('title', '')}\"",
             notif_type="reply",
         )
+        # Send email to student
+        try:
+            student = db.users.find_one({"_id": ObjectId(ticket["user_id"])})
+            if student and student.get("email") and email_notifications_enabled(db):
+                send_new_reply(
+                    to=student["email"],
+                    recipient_name=student.get("full_name") or student.get("email", "Student"),
+                    ticket_id=ticket_id,
+                    ticket_title=ticket.get("title", ""),
+                    author_name=user.get("full_name") or "Support Team",
+                    reply_text=comment.text,
+                )
+        except Exception:
+            pass
     elif user["role"] == "student":
-        # Student replied → notify assigned admin or all admins
+        # Student replied → notify assigned admin or all admins (in-app)
         notify_uid = None
         if ticket.get("assigned_to"):
             admin_user = db.users.find_one({"full_name": ticket["assigned_to"], "role": "admin"})

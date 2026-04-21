@@ -5,24 +5,25 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { ticketsApi } from "../api";
 import NotificationBell from "../components/NotificationBell";
+import ThemeToggle from "../components/ThemeToggle";
 import { formatDate } from "../utils/formatDate";
 import {
   ChevronLeft, ChevronRight, Search, Filter, Plus,
-  CheckCircle, AlertCircle, LogOut, X, Zap, TrendingUp,
-  MessageSquare, ArrowRight, Loader, RefreshCw,
+  CheckCircle, AlertCircle, LogOut, X, Zap,
+  MessageSquare, ArrowRight, RefreshCw,
 } from "lucide-react";
 
 const STATUS_COLORS = {
-  open:        "bg-yellow-100 text-yellow-800",
-  in_progress: "bg-blue-100 text-blue-800",
-  resolved:    "bg-green-100 text-green-800",
-  closed:      "bg-gray-100 text-gray-800",
+  open:        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  in_progress: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  resolved:    "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  closed:      "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
 };
 const PRIORITY_COLORS = {
-  low:    "bg-blue-100 text-blue-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  high:   "bg-red-100 text-red-800",
-  urgent: "bg-purple-100 text-purple-800",
+  low:    "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  high:   "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  urgent: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
 };
 const URGENCY_BORDER = {
   urgent: "border-l-4 border-l-purple-500",
@@ -167,13 +168,13 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-5">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Student Dashboard</h1>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Student Dashboard</h1>
               <button
                 onClick={() => navigate("/my-tickets")}
                 className="text-teal-600 hover:text-teal-700 text-sm font-medium mt-1 flex items-center gap-1 group"
@@ -191,16 +192,17 @@ export default function Dashboard() {
                 New Ticket
               </button>
               <NotificationBell />
-              <div className="flex items-center gap-2 bg-teal-50 px-3 py-2 rounded-lg border border-teal-100">
+              <ThemeToggle />
+              <div className="flex items-center gap-2 bg-teal-50 dark:bg-teal-900/30 px-3 py-2 rounded-lg border border-teal-100 dark:border-teal-800">
                 <div className="w-8 h-8 bg-teal-500 text-white rounded-full flex items-center justify-center font-semibold text-xs">
                   {userInitials}
                 </div>
                 <div className="text-sm hidden sm:block">
-                  <p className="font-semibold text-gray-900 leading-tight">{user?.displayName || "Student"}</p>
-                  <p className="text-gray-500 text-xs">{user?.email}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white leading-tight">{user?.displayName || "Student"}</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-xs">{user?.email}</p>
                 </div>
               </div>
-              <button onClick={handleLogout} className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-500" title="Logout">
+              <button onClick={handleLogout} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition text-gray-500 dark:text-gray-400" title="Logout">
                 <LogOut size={18} />
               </button>
             </div>
@@ -219,14 +221,14 @@ export default function Dashboard() {
                   <div
                     key={card.key}
                     onClick={() => { setFilters({ status: card.key !== "total" ? [card.key] : [], priority: [] }); setPage(1); }}
-                    className={`${card.bgColor} ${card.borderColor} border rounded-xl p-5 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group`}
+                    className={`${card.bgColor} ${card.borderColor} dark:bg-gray-800 dark:border-gray-700 border rounded-xl p-5 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group`}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide mb-1">{card.label}</p>
-                        <p className="text-3xl font-bold text-gray-900">{stats?.[card.key] ?? 0}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-xs font-semibold uppercase tracking-wide mb-1">{card.label}</p>
+                        <p className="text-3xl font-bold text-gray-900 dark:text-white">{stats?.[card.key] ?? 0}</p>
                       </div>
-                      <div className={`${card.color} p-2 rounded-lg bg-white shadow-sm group-hover:scale-110 transition-transform`}>
+                      <div className={`${card.color} p-2 rounded-lg bg-white dark:bg-gray-700 shadow-sm group-hover:scale-110 transition-transform`}>
                         <Icon size={22} />
                       </div>
                     </div>
@@ -236,13 +238,13 @@ export default function Dashboard() {
         </div>
 
         {/* Tickets Section */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
           {/* Toolbar */}
-          <div className="px-6 py-4 border-b border-gray-100 flex flex-wrap justify-between items-center gap-3">
+          <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex flex-wrap justify-between items-center gap-3">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Recent Tickets</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Tickets</h2>
               {!ticketsLoading && (
-                <p className="text-xs text-gray-500 mt-0.5">{totalTickets} ticket{totalTickets !== 1 ? "s" : ""} total</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{totalTickets} ticket{totalTickets !== 1 ? "s" : ""} total</p>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -253,15 +255,15 @@ export default function Dashboard() {
                   placeholder="Search tickets..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-48"
+                  className="pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 w-48"
                 />
               </div>
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className={`flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm transition ${
                   showFilters || hasActiveFilters
-                    ? "bg-teal-50 border-teal-300 text-teal-700"
-                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    ? "bg-teal-50 dark:bg-teal-900/30 border-teal-300 text-teal-700 dark:text-teal-400"
+                    : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                 }`}
               >
                 <Filter size={15} />
@@ -272,7 +274,7 @@ export default function Dashboard() {
                   </span>
                 )}
               </button>
-              <button onClick={fetchTickets} className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-500" title="Refresh">
+              <button onClick={fetchTickets} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition text-gray-500 dark:text-gray-400" title="Refresh">
                 <RefreshCw size={15} />
               </button>
             </div>
@@ -280,9 +282,9 @@ export default function Dashboard() {
 
           {/* Filter Panel */}
           {showFilters && (
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-gray-700">Filter by</span>
+                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Filter by</span>
                 {hasActiveFilters && (
                   <button onClick={clearFilters} className="text-xs text-red-500 hover:text-red-600 flex items-center gap-1">
                     <X size={12} /> Clear all
@@ -291,7 +293,7 @@ export default function Dashboard() {
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Status</p>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</p>
                   <div className="flex flex-wrap gap-2">
                     {["open", "in_progress", "resolved", "closed"].map((s) => (
                       <button
@@ -300,7 +302,7 @@ export default function Dashboard() {
                         className={`px-3 py-1 rounded-full text-xs font-medium transition capitalize ${
                           filters.status.includes(s)
                             ? "bg-teal-500 text-white"
-                            : "bg-white border border-gray-200 text-gray-600 hover:border-teal-300"
+                            : "bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-teal-300"
                         }`}
                       >
                         {s.replace("_", " ")}
@@ -309,7 +311,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Priority</p>
+                  <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Priority</p>
                   <div className="flex flex-wrap gap-2">
                     {["urgent", "high", "medium", "low"].map((p) => (
                       <button
@@ -318,7 +320,7 @@ export default function Dashboard() {
                         className={`px-3 py-1 rounded-full text-xs font-medium transition capitalize ${
                           filters.priority.includes(p)
                             ? "bg-teal-500 text-white"
-                            : "bg-white border border-gray-200 text-gray-600 hover:border-teal-300"
+                            : "bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-teal-300"
                         }`}
                       >
                         {p}
@@ -331,7 +333,7 @@ export default function Dashboard() {
           )}
 
           {/* Ticket List */}
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {ticketsLoading ? (
               Array(3).fill(0).map((_, i) => <TicketSkeleton key={i} />)
             ) : ticketsError ? (
@@ -344,11 +346,11 @@ export default function Dashboard() {
               <div className="px-6 py-16 text-center">
                 {totalTickets === 0 && !search && !hasActiveFilters ? (
                   <>
-                    <div className="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-16 h-16 bg-teal-50 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Plus size={28} className="text-teal-500" />
                     </div>
-                    <h3 className="text-gray-900 font-semibold mb-1">No tickets yet</h3>
-                    <p className="text-gray-500 text-sm mb-4">Submit your first support ticket and we'll get back to you quickly.</p>
+                    <h3 className="text-gray-900 dark:text-white font-semibold mb-1">No tickets yet</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Submit your first support ticket and we'll get back to you quickly.</p>
                     <button
                       onClick={() => navigate("/create-ticket")}
                       className="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition"
@@ -359,7 +361,7 @@ export default function Dashboard() {
                 ) : (
                   <>
                     <AlertCircle size={32} className="mx-auto text-gray-300 mb-3" />
-                    <p className="text-gray-500 text-sm">No tickets match your search or filters.</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No tickets match your search or filters.</p>
                     <button onClick={clearFilters} className="mt-2 text-teal-600 hover:underline text-sm">Clear filters</button>
                   </>
                 )}
@@ -368,20 +370,20 @@ export default function Dashboard() {
               tickets.map((ticket) => (
                 <div
                   key={ticket.id}
-                  className={`${URGENCY_BORDER[ticket.priority] || "border-l-4 border-l-gray-200"} px-6 py-4 hover:bg-gray-50 transition group`}
+                  className={`${URGENCY_BORDER[ticket.priority] || "border-l-4 border-l-gray-200"} px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition group`}
                 >
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start gap-2 mb-1">
-                        <h3 className="text-base font-semibold text-gray-900 group-hover:text-teal-700 transition truncate">
+                        <h3 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition truncate">
                           {ticket.title}
                         </h3>
                         {ticket.has_unread && (
                           <span className="flex-shrink-0 w-2 h-2 bg-teal-500 rounded-full mt-1.5" title="New reply" />
                         )}
                       </div>
-                      <p className="text-gray-500 text-sm line-clamp-1 mb-2">{ticket.description}</p>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                      <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-1 mb-2">{ticket.description}</p>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
                         <span className="font-mono">#{ticket.id.slice(-6).toUpperCase()}</span>
                         <span className="flex items-center gap-1">
                           <span className="w-1.5 h-1.5 bg-teal-400 rounded-full" />
@@ -421,17 +423,17 @@ export default function Dashboard() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
-              <p className="text-xs text-gray-500">
+            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex justify-between items-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 Page {page} of {totalPages}
               </p>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setPage(Math.max(1, page - 1))}
                   disabled={page === 1}
-                  className="p-1.5 hover:bg-gray-200 rounded-lg transition disabled:opacity-40"
+                  className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition disabled:opacity-40"
                 >
-                  <ChevronLeft size={16} className="text-gray-600" />
+                  <ChevronLeft size={16} className="text-gray-600 dark:text-gray-400" />
                 </button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                   const p = totalPages <= 5 ? i + 1 : Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
@@ -440,7 +442,7 @@ export default function Dashboard() {
                       key={p}
                       onClick={() => setPage(p)}
                       className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
-                        page === p ? "bg-teal-500 text-white" : "hover:bg-gray-200 text-gray-700"
+                        page === p ? "bg-teal-500 text-white" : "hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300"
                       }`}
                     >
                       {p}
@@ -450,9 +452,9 @@ export default function Dashboard() {
                 <button
                   onClick={() => setPage(Math.min(totalPages, page + 1))}
                   disabled={page === totalPages}
-                  className="p-1.5 hover:bg-gray-200 rounded-lg transition disabled:opacity-40"
+                  className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition disabled:opacity-40"
                 >
-                  <ChevronRight size={16} className="text-gray-600" />
+                  <ChevronRight size={16} className="text-gray-600 dark:text-gray-400" />
                 </button>
               </div>
             </div>

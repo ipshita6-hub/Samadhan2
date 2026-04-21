@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ticketsApi } from "../api";
+import ThemeToggle from "../components/ThemeToggle";
 import {
   ArrowLeft, Plus, Filter, X, AlertCircle, CheckCircle,
   ChevronLeft, ChevronRight, Search, Download, RefreshCw,
@@ -8,22 +9,22 @@ import {
 import { formatDate, formatDateOnly } from "../utils/formatDate";
 
 const STATUS_COLORS = {
-  open:        "bg-yellow-100 text-yellow-800",
-  in_progress: "bg-blue-100 text-blue-800",
-  resolved:    "bg-green-100 text-green-800",
-  closed:      "bg-gray-100 text-gray-800",
+  open:        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  in_progress: "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  resolved:    "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
+  closed:      "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
 };
 const PRIORITY_COLORS = {
-  low:    "bg-blue-100 text-blue-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  high:   "bg-red-100 text-red-800",
-  urgent: "bg-purple-100 text-purple-800",
+  low:    "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
+  high:   "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
+  urgent: "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300",
 };
 const STATUS_BG = {
-  open:        "bg-yellow-50",
-  in_progress: "bg-blue-50",
-  resolved:    "bg-green-50",
-  closed:      "bg-gray-50",
+  open:        "bg-yellow-50 dark:bg-gray-800",
+  in_progress: "bg-blue-50 dark:bg-gray-800",
+  resolved:    "bg-green-50 dark:bg-gray-800",
+  closed:      "bg-gray-50 dark:bg-gray-800",
 };
 
 
@@ -153,25 +154,26 @@ export default function MyTickets() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-4">
-              <button onClick={() => navigate("/dashboard")} className="p-2 hover:bg-gray-100 rounded-lg transition">
-                <ArrowLeft size={20} className="text-gray-600" />
+              <button onClick={() => navigate("/dashboard")} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
+                <ArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
               </button>
               <div>
                 <p className="text-sm text-teal-600 font-medium">Dashboard</p>
-                <h1 className="text-3xl font-bold text-gray-900">My Tickets</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Tickets</h1>
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <ThemeToggle />
               <button
                 onClick={handleExport}
                 disabled={allTickets.length === 0}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm disabled:opacity-40"
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition text-sm disabled:opacity-40"
               >
                 <Download size={16} />
                 Export CSV
@@ -186,7 +188,7 @@ export default function MyTickets() {
             </div>
           </div>
           <div className="flex items-center gap-2 ml-14">
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {loading ? "Loading…" : `${total} ticket${total !== 1 ? "s" : ""} total`}
             </span>
           </div>
@@ -195,7 +197,7 @@ export default function MyTickets() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Search + Filter bar */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-6">
           <div className="flex flex-wrap items-center gap-3 mb-4">
             {/* Search */}
             <div className="relative flex-1 min-w-48">
@@ -205,14 +207,14 @@ export default function MyTickets() {
                 placeholder="Search by title, ID, or description…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                className="w-full pl-9 pr-4 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
             {/* Sort */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
@@ -223,8 +225,8 @@ export default function MyTickets() {
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-1.5 px-3 py-2 border rounded-lg text-sm transition ${
                 showFilters || hasActiveFilters
-                  ? "bg-teal-50 border-teal-300 text-teal-700"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  ? "bg-teal-50 dark:bg-teal-900/30 border-teal-300 text-teal-700 dark:text-teal-400"
+                  : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               }`}
             >
               <Filter size={15} />
@@ -247,13 +249,13 @@ export default function MyTickets() {
 
           {/* Filter dropdowns */}
           {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-gray-100">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Status</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Status</label>
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="">All statuses</option>
                   {["open", "in_progress", "resolved", "closed"].map((s) => (
@@ -262,11 +264,11 @@ export default function MyTickets() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Priority</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Priority</label>
                 <select
                   value={filters.priority}
                   onChange={(e) => setFilters((p) => ({ ...p, priority: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="">All priorities</option>
                   {["urgent", "high", "medium", "low"].map((p) => (
@@ -275,11 +277,11 @@ export default function MyTickets() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Category</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Category</label>
                 <select
                   value={filters.category}
                   onChange={(e) => setFilters((p) => ({ ...p, category: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="">All categories</option>
                   {categories.map((c) => (
@@ -328,20 +330,20 @@ export default function MyTickets() {
             {Array(4).fill(0).map((_, i) => <TicketRowSkeleton key={i} />)}
           </div>
         ) : error ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
             <AlertCircle size={36} className="mx-auto text-red-400 mb-3" />
-            <p className="text-red-600 font-medium">{error}</p>
+            <p className="text-red-600 dark:text-red-400 font-medium">{error}</p>
             <button onClick={fetchPage} className="mt-3 text-teal-600 hover:underline text-sm">Retry</button>
           </div>
         ) : sorted.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
             {total === 0 && !search && !hasActiveFilters ? (
               <>
                 <div className="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Plus size={24} className="text-teal-500" />
                 </div>
-                <p className="text-gray-700 font-semibold mb-1">No tickets yet</p>
-                <p className="text-gray-500 text-sm mb-4">Submit your first support request.</p>
+                <p className="text-gray-700 dark:text-white font-semibold mb-1">No tickets yet</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Submit your first support request.</p>
                 <button
                   onClick={() => navigate("/create-ticket")}
                   className="bg-teal-500 hover:bg-teal-600 text-white px-5 py-2 rounded-lg text-sm font-medium transition"
@@ -352,7 +354,7 @@ export default function MyTickets() {
             ) : (
               <>
                 <CheckCircle size={32} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-gray-500 text-sm">No tickets match your filters.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No tickets match your filters.</p>
                 <button onClick={clearFilters} className="mt-2 text-teal-600 hover:underline text-sm">Clear filters</button>
               </>
             )}
@@ -362,18 +364,18 @@ export default function MyTickets() {
             {sorted.map((ticket) => (
               <div
                 key={ticket.id}
-                className={`${STATUS_BG[ticket.status] || "bg-white"} border border-gray-200 rounded-xl p-4 hover:shadow-md transition`}
+                className={`${STATUS_BG[ticket.status] || "bg-white dark:bg-gray-800"} border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:shadow-md transition`}
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">{ticket.title}</h3>
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">{ticket.title}</h3>
                       {ticket.has_unread && (
                         <span className="flex-shrink-0 w-2 h-2 bg-teal-500 rounded-full" title="New reply" />
                       )}
                     </div>
-                    <p className="text-gray-500 text-sm line-clamp-1 mb-2">{ticket.description}</p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-1 mb-2">{ticket.description}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
                       <span className="font-mono">#{ticket.id.slice(-6).toUpperCase()}</span>
                       <span className="flex items-center gap-1">
                         <span className="w-1.5 h-1.5 bg-teal-400 rounded-full" />
@@ -411,14 +413,14 @@ export default function MyTickets() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-8 flex justify-between items-center">
-            <p className="text-sm text-gray-500">Page {page} of {totalPages}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Page {page} of {totalPages}</p>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="p-2 hover:bg-gray-100 rounded-lg transition disabled:opacity-40"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-40"
               >
-                <ChevronLeft size={16} className="text-gray-600" />
+                <ChevronLeft size={16} className="text-gray-600 dark:text-gray-400" />
               </button>
               {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
                 const p = totalPages <= 7 ? i + 1 : Math.max(1, Math.min(page - 3, totalPages - 6)) + i;
@@ -427,7 +429,7 @@ export default function MyTickets() {
                     key={p}
                     onClick={() => setPage(p)}
                     className={`w-9 h-9 rounded-lg text-sm font-medium transition ${
-                      page === p ? "bg-teal-500 text-white" : "hover:bg-gray-100 text-gray-700"
+                      page === p ? "bg-teal-500 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                     }`}
                   >
                     {p}
@@ -437,9 +439,9 @@ export default function MyTickets() {
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="p-2 hover:bg-gray-100 rounded-lg transition disabled:opacity-40"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition disabled:opacity-40"
               >
-                <ChevronRight size={16} className="text-gray-600" />
+                <ChevronRight size={16} className="text-gray-600 dark:text-gray-400" />
               </button>
             </div>
           </div>
