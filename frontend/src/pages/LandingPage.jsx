@@ -157,9 +157,9 @@ export default function LandingPage() {
             </div>
 
             {/* Main Heading */}
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight pb-2">
               Best Open Source
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-blue-600">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-blue-600 py-2">
                 University Ticketing
               </span>
               System
