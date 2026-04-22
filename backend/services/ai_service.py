@@ -4,7 +4,7 @@ Uses keyword/rule-based NLP — no heavy ML dependencies required.
 """
 
 import re
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 # ── Sentiment keywords ────────────────────────────────────────────────────────
 
@@ -152,18 +152,59 @@ def suggest_priority(sentiment: Dict, category: str, title: str, description: st
     return base
 
 
-def analyze_ticket(title: str, description: str, user_category: str = None) -> Dict:
+def find_similar_tickets(title: str, description: str, db, limit: int = 3) -> List[Dict]:
     """
-    Full analysis: sentiment + category suggestion + priority suggestion.
+    Find similar tickets using keyword matching.
+    Returns list of {ticket_id, title, similarity_score}.
+    """
+    text = f"{title} {description}".lower()
+    words = set(re.findall(r"\b\w+\b", text))
+    # Remove common stop words
+    stop_words = {"the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by", "from", "is", "was", "are", "were", "be", "been", "have", "has", "had", "do", "does", "did", "will", "would", "could", "should", "may", "might", "can", "i", "you", "he", "she", "it", "we", "they", "my", "your", "his", "her", "its", "our", "their", "this", "that", "these", "those"}
+    keywords = words - stop_words
+    
+    if len(keywords) < 2:
+        return []
+    
+    # Find tickets with overlapping keywords
+    all_tickets = list(db.tickets.find({}, {"_id": 1, "title": 1, "description": 1, "status": 1}))
+    similar = []
+    
+    for t in all_tickets:
+        t_text = f"{t.get('title', '')} {t.get('description', '')}".lower()
+        t_words = set(re.findall(r"\b\w+\b", t_text)) - stop_words
+        overlap = len(keywords & t_words)
+        if overlap >= 2:  # At least 2 common keywords
+            similarity = round(overlap / len(keywords | t_words), 2)
+            similar.append({
+                "ticket_id": str(t["_id"]),
+                "title": t.get("title", ""),
+                "status": t.get("status", "open"),
+                "similarity_score": similarity,
+            })
+    
+    # Sort by similarity and return top N
+    similar.sort(key=lambda x: x["similarity_score"], reverse=True)
+    return similar[:limit]
+
+
+def analyze_ticket(title: str, description: str, user_category: str = None, db=None) -> Dict:
+    """
+    Full analysis: sentiment + category suggestion + priority suggestion + duplicate detection.
     Returns a dict to be stored on the ticket and returned to the frontend.
     """
     sentiment = analyze_sentiment(title, description)
     suggested_cat, confidence = suggest_category(title, description)
     suggested_priority = suggest_priority(sentiment, user_category or suggested_cat, title, description)
+    
+    similar_tickets = []
+    if db is not None:
+        similar_tickets = find_similar_tickets(title, description, db, limit=3)
 
     return {
         "sentiment": sentiment,
         "suggested_category": suggested_cat,
         "category_confidence": confidence,
         "suggested_priority": suggested_priority,
+        "similar_tickets": similar_tickets,
     }

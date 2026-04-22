@@ -75,6 +75,7 @@ def serialize_ticket(t, db=None):
         "has_unread": t.get("has_unread", False),
         "attachments": t.get("attachments", []),
         "ai_analysis": t.get("ai_analysis"),
+        "satisfaction_rating": t.get("satisfaction_rating"),
         "created_at": t.get("created_at", datetime.utcnow()).isoformat() + "Z",
         "updated_at": t.get("updated_at", datetime.utcnow()).isoformat() + "Z",
         **user_info,
@@ -130,24 +131,30 @@ async def create_ticket(
     user = get_current_user(decoded_token, db)
 
     # ── AI analysis ──────────────────────────────────────────────────────────
-    ai = analyze_ticket(ticket.title, ticket.description, ticket.category)
+    ai = analyze_ticket(ticket.title, ticket.description, ticket.category, db)
     # Use AI-suggested priority only if user left it at default "medium"
     final_priority = ticket.priority
     if ticket.priority == "medium" and ai["suggested_priority"] != "medium":
         final_priority = ai["suggested_priority"]
+    
+    # Use AI-suggested category if confidence is high and user didn't specify
+    final_category = ticket.category
+    if ai["category_confidence"] >= 0.7 and not ticket.category:
+        final_category = ai["suggested_category"]
 
     ticket_doc = {
         "user_id": str(user["_id"]),
         "title": ticket.title,
         "description": ticket.description,
         "priority": final_priority,
-        "category": ticket.category,
+        "category": final_category,
         "course": ticket.course or None,
         "status": "open",
         "assigned_to": None,
         "comment_count": 0,
         "attachments": [],
         "ai_analysis": ai,
+        "satisfaction_rating": None,
         "resolved_at": None,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
@@ -803,3 +810,159 @@ async def react_to_comment(
     )
 
     return {"reactions": reactions}
+
+
+# ─── Satisfaction rating ──────────────────────────────────────────────────────
+
+@router.post("/{ticket_id}/satisfaction")
+async def rate_satisfaction(
+    ticket_id: str,
+    rating: "SatisfactionRating",
+    decoded_token: dict = Depends(verify_firebase_token),
+    db=Depends(get_db),
+):
+    from models import SatisfactionRating
+    user = get_current_user(decoded_token, db)
+    try:
+        ticket = db.tickets.find_one({"_id": ObjectId(ticket_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ticket ID")
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if ticket["user_id"] != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Access denied")
+    if ticket["status"] not in ("resolved", "closed"):
+        raise HTTPException(status_code=400, detail="Can only rate resolved or closed tickets")
+    
+    db.tickets.update_one(
+        {"_id": ObjectId(ticket_id)},
+        {"$set": {
+            "satisfaction_rating": {
+                "rating": rating.rating,
+                "feedback": rating.feedback,
+                "rated_at": datetime.utcnow(),
+            },
+            "updated_at": datetime.utcnow(),
+        }},
+    )
+    return {"message": "Thank you for your feedback!"}
+
+
+# ─── Heatmap data (busiest hours/days) ───────────────────────────────────────
+
+@router.get("/admin/heatmap")
+async def get_heatmap_data(
+    decoded_token: dict = Depends(verify_firebase_token),
+    db=Depends(get_db),
+):
+    require_admin(decoded_token, db)
+    
+    # Get all tickets with created_at
+    tickets = list(db.tickets.find({}, {"created_at": 1}))
+    
+    # Count by hour (0-23) and day of week (0=Monday, 6=Sunday)
+    hour_counts = [0] * 24
+    day_counts = [0] * 7
+    
+    for t in tickets:
+        dt = t.get("created_at")
+        if dt:
+            hour_counts[dt.hour] += 1
+            day_counts[dt.weekday()] += 1
+    
+    return {
+        "by_hour": hour_counts,
+        "by_day": day_counts,
+    }
+
+
+# ─── Estimated response time ──────────────────────────────────────────────────
+
+@router.get("/estimated-response-time")
+async def get_estimated_response_time(
+    decoded_token: dict = Depends(verify_firebase_token),
+    db=Depends(get_db),
+):
+    """Calculate average time from ticket creation to first admin reply."""
+    # Find tickets with at least one admin comment
+    tickets_with_replies = list(db.tickets.find(
+        {"comment_count": {"$gt": 0}},
+        {"_id": 1, "created_at": 1}
+    ))
+    
+    if not tickets_with_replies:
+        return {"avg_response_hours": None, "message": "Not enough data yet"}
+    
+    response_times = []
+    for t in tickets_with_replies:
+        # Find first admin comment
+        first_admin_comment = db.comments.find_one(
+            {"ticket_id": str(t["_id"]), "author_role": "admin"},
+            sort=[("created_at", 1)]
+        )
+        if first_admin_comment:
+            delta = first_admin_comment["created_at"] - t["created_at"]
+            hours = delta.total_seconds() / 3600
+            response_times.append(hours)
+    
+    if not response_times:
+        return {"avg_response_hours": None, "message": "No admin replies yet"}
+    
+    avg_hours = round(sum(response_times) / len(response_times), 1)
+    return {"avg_response_hours": avg_hours}
+
+
+# ─── Bulk actions (admin only) ────────────────────────────────────────────────
+
+@router.post("/bulk-action")
+async def bulk_action(
+    ticket_ids: List[str],
+    action: str,  # "close", "resolve", "assign", "delete"
+    assigned_to: Optional[str] = None,
+    decoded_token: dict = Depends(verify_firebase_token),
+    db=Depends(get_db),
+):
+    admin = require_admin(decoded_token, db)
+    
+    if not ticket_ids:
+        raise HTTPException(status_code=400, detail="No ticket IDs provided")
+    
+    valid_ids = []
+    for tid in ticket_ids:
+        if ObjectId.is_valid(tid):
+            valid_ids.append(ObjectId(tid))
+    
+    if not valid_ids:
+        raise HTTPException(status_code=400, detail="No valid ticket IDs")
+    
+    if action == "close":
+        result = db.tickets.update_many(
+            {"_id": {"$in": valid_ids}},
+            {"$set": {"status": "closed", "updated_at": datetime.utcnow()}}
+        )
+        return {"message": f"Closed {result.modified_count} tickets"}
+    
+    elif action == "resolve":
+        result = db.tickets.update_many(
+            {"_id": {"$in": valid_ids}},
+            {"$set": {"status": "resolved", "resolved_at": datetime.utcnow(), "updated_at": datetime.utcnow()}}
+        )
+        return {"message": f"Resolved {result.modified_count} tickets"}
+    
+    elif action == "assign":
+        if not assigned_to:
+            raise HTTPException(status_code=400, detail="assigned_to is required for assign action")
+        result = db.tickets.update_many(
+            {"_id": {"$in": valid_ids}},
+            {"$set": {"assigned_to": assigned_to, "updated_at": datetime.utcnow()}}
+        )
+        return {"message": f"Assigned {result.modified_count} tickets to {assigned_to}"}
+    
+    elif action == "delete":
+        # Delete tickets and their comments
+        result = db.tickets.delete_many({"_id": {"$in": valid_ids}})
+        db.comments.delete_many({"ticket_id": {"$in": [str(tid) for tid in valid_ids]}})
+        return {"message": f"Deleted {result.deleted_count} tickets"}
+    
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action")

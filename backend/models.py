@@ -74,3 +74,7 @@ class NotificationRead(BaseModel):
 
 class ReactionToggle(BaseModel):
     emoji: str
+
+class SatisfactionRating(BaseModel):
+    rating: int = Field(ge=1, le=5)  # 1-5 stars or 1-3 for emoji
+    feedback: Optional[str] = None
