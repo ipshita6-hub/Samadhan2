@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { ticketsApi, createTicketSocket } from "../api";
 import { formatDate } from "../utils/formatDate";
 import ThemeToggle from "../components/ThemeToggle";
+import RichTextEditor from "../components/RichTextEditor";
 import {
   ArrowLeft,
   Send,
@@ -59,6 +60,12 @@ export default function TicketDetails() {
   const [deletingAttachment, setDeletingAttachment] = useState(null);
   const bottomRef = useRef(null);
 
+  // Satisfaction rating
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [ratingFeedback, setRatingFeedback] = useState("");
+  const [submittingRating, setSubmittingRating] = useState(false);
+
   // reactions: { [commentId]: { emoji: [uid, ...] } }
   const [reactions, setReactions] = useState({});
   const [emojiPickerFor, setEmojiPickerFor] = useState(null); // commentId
@@ -88,6 +95,15 @@ export default function TicketDetails() {
   }, [ticketId]);
 
   useEffect(() => { fetchTicket(); }, [fetchTicket]);
+
+  // Show satisfaction rating modal when ticket is resolved/closed and not yet rated
+  useEffect(() => {
+    if (ticket && (ticket.status === "resolved" || ticket.status === "closed") && !ticket.satisfaction_rating) {
+      // Show modal after a short delay
+      const timer = setTimeout(() => setShowRatingModal(true), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [ticket]);
 
   // Scroll to bottom when new comments appear
   useEffect(() => {
@@ -253,6 +269,21 @@ export default function TicketDetails() {
     }
   };
 
+  const handleSubmitRating = async () => {
+    if (!rating) return;
+    try {
+      setSubmittingRating(true);
+      await ticketsApi.rateSatisfaction(ticketId, rating, ratingFeedback || null);
+      setShowRatingModal(false);
+      setActionMsg({ type: "success", text: "Thank you for your feedback!" });
+      await fetchTicket();
+    } catch (err) {
+      setActionMsg({ type: "error", text: err.message });
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -297,6 +328,59 @@ export default function TicketDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Satisfaction Rating Modal */}
+      {showRatingModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Rate Your Experience</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">How satisfied are you with the resolution of your ticket?</p>
+            <div className="flex justify-center gap-4 mb-6">
+              {[
+                { emoji: "😞", value: 1, label: "Poor", color: "hover:bg-red-100 dark:hover:bg-red-900/30" },
+                { emoji: "😐", value: 2, label: "Fair", color: "hover:bg-orange-100 dark:hover:bg-orange-900/30" },
+                { emoji: "🙂", value: 3, label: "Good", color: "hover:bg-yellow-100 dark:hover:bg-yellow-900/30" },
+                { emoji: "😊", value: 4, label: "Great", color: "hover:bg-teal-100 dark:hover:bg-teal-900/30" },
+                { emoji: "😍", value: 5, label: "Excellent", color: "hover:bg-green-100 dark:hover:bg-green-900/30" },
+              ].map(({ emoji, value, label, color }) => (
+                <button
+                  key={value}
+                  onClick={() => setRating(value)}
+                  className={`flex flex-col items-center p-3 rounded-lg transition ${
+                    rating === value ? "bg-teal-100 dark:bg-teal-900/40 scale-110 ring-2 ring-teal-500" : color
+                  }`}
+                >
+                  <span className="text-4xl mb-1">{emoji}</span>
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{label}</span>
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={ratingFeedback}
+              onChange={(e) => setRatingFeedback(e.target.value)}
+              placeholder="Any additional feedback? (optional)"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg p-3 mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+              rows="3"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowRatingModal(false)}
+                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleSubmitRating}
+                disabled={!rating || submittingRating}
+                className="flex-1 bg-teal-500 text-white rounded-lg py-2 disabled:opacity-50 hover:bg-teal-600 transition flex items-center justify-center gap-2"
+              >
+                {submittingRating ? <Loader size={16} className="animate-spin" /> : null}
+                {submittingRating ? "Submitting..." : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-6xl mx-auto px-6 py-6">
@@ -515,7 +599,7 @@ export default function TicketDetails() {
                               )}
                             </div>
                           </div>
-                          <p className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-line leading-relaxed">{comment.text}</p>
+                          <div className="text-gray-700 dark:text-gray-300 text-sm prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: comment.text }} />
 
                           {/* Reaction bubbles */}
                           {Object.keys(commentReactions).length > 0 && (
@@ -574,12 +658,10 @@ export default function TicketDetails() {
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
                   <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3">Still need help?</h3>
                   <form onSubmit={handleSubmitReply}>
-                    <textarea
+                    <RichTextEditor
                       value={reply}
-                      onChange={(e) => setReply(e.target.value)}
+                      onChange={setReply}
                       placeholder="Describe the ongoing issue..."
-                      rows="3"
-                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none text-sm"
                       disabled={submitting}
                     />
                     {submitError && <p className="text-red-600 text-xs mt-1">{submitError}</p>}
@@ -600,12 +682,10 @@ export default function TicketDetails() {
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Add a Reply</h3>
                 <form onSubmit={handleSubmitReply}>
-                  <textarea
+                  <RichTextEditor
                     value={reply}
-                    onChange={(e) => setReply(e.target.value)}
+                    onChange={setReply}
                     placeholder="Type your message here..."
-                    rows="4"
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
                     disabled={submitting}
                   />
                   {submitError && <p className="text-red-600 text-sm mt-2">{submitError}</p>}

@@ -4,7 +4,7 @@ import { ticketsApi, faqApi } from "../api";
 import ThemeToggle from "../components/ThemeToggle";
 import {
   ArrowLeft, Upload, Zap, AlertCircle, Loader, CheckCircle, X,
-  Brain, TrendingUp, TrendingDown, Minus, BookOpen, ChevronDown, ChevronUp, Lightbulb,
+  Brain, TrendingUp, TrendingDown, Minus, BookOpen, ChevronDown, ChevronUp, Lightbulb, Clock,
 } from "lucide-react";
 
 const COURSES = [
@@ -103,6 +103,15 @@ export default function CreateTicket() {
   const [faqsVisible, setFaqsVisible] = useState(true);
   const debounceRef = useRef(null);
   const faqDebounceRef = useRef(null);
+  const [estimatedTime, setEstimatedTime] = useState(null);
+  const [similarTickets, setSimilarTickets] = useState([]);
+
+  // Fetch estimated response time on mount
+  useEffect(() => {
+    ticketsApi.getEstimatedResponseTime()
+      .then(data => setEstimatedTime(data.avg_response_hours))
+      .catch(() => setEstimatedTime(null));
+  }, []);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -160,6 +169,10 @@ export default function CreateTicket() {
         priority: formData.priority,
         course: formData.course || null,
       });
+      // Check for similar tickets from AI analysis
+      if (result.ai_analysis?.similar_tickets && result.ai_analysis.similar_tickets.length > 0) {
+        setSimilarTickets(result.ai_analysis.similar_tickets);
+      }
       if (attachments.length > 0) await ticketsApi.uploadAttachments(result.id, attachments);
       setSuccess(true);
       setTimeout(() => navigate("/my-tickets"), 1800);
@@ -206,6 +219,48 @@ export default function CreateTicket() {
         <div className="grid grid-cols-3 gap-8">
           <div className="col-span-2">
             <form onSubmit={handleSubmit} className="space-y-6">
+
+              {/* Estimated Response Time Banner */}
+              {estimatedTime !== null && (
+                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 flex gap-3">
+                  <Clock className="text-teal-600 flex-shrink-0 mt-0.5" size={20} />
+                  <div>
+                    <h3 className="font-semibold text-teal-900">Average Response Time</h3>
+                    <p className="text-sm text-teal-800 mt-1">
+                      Our team typically responds within <strong>{estimatedTime < 1 ? `${Math.round(estimatedTime * 60)} minutes` : estimatedTime < 24 ? `${estimatedTime.toFixed(1)} hours` : `${(estimatedTime / 24).toFixed(1)} days`}</strong>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Similar Tickets Warning */}
+              {similarTickets.length > 0 && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <AlertCircle className="text-orange-600 flex-shrink-0 mt-0.5" size={20} />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-orange-900 mb-2">Similar Tickets Found</h3>
+                      <p className="text-sm text-orange-800 mb-3">We found {similarTickets.length} similar ticket{similarTickets.length !== 1 ? 's' : ''} that might help:</p>
+                      <div className="space-y-2">
+                        {similarTickets.map((sim, idx) => (
+                          <div key={idx} className="bg-white rounded-lg p-3 border border-orange-200">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{sim.title}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">Ticket #{sim.id.slice(-6).toUpperCase()} · {sim.status}</p>
+                              </div>
+                              <span className="text-xs font-semibold text-orange-600 bg-orange-100 px-2 py-1 rounded-full flex-shrink-0">
+                                {Math.round(sim.similarity * 100)}% match
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-orange-700 mt-3">Consider checking these tickets before submitting a new one.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* AI banner */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
