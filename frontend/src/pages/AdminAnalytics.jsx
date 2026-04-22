@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import AdminNav from "../components/AdminNav";
 import { ticketsApi } from "../api";
 import { BarChart3, Clock, CheckCircle, AlertCircle, Users, RefreshCw, Timer } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 function ProgressBar({ value, max, color = "bg-teal-500" }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -29,6 +30,7 @@ export default function AdminAnalytics() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [heatmapData, setHeatmapData] = useState(null);
 
   async function loadStats() {
     setLoading(true);
@@ -36,6 +38,9 @@ export default function AdminAnalytics() {
     try {
       const data = await ticketsApi.getStats();
       setStats(data);
+      // Load heatmap data
+      const heatmap = await ticketsApi.getHeatmap();
+      setHeatmapData(heatmap);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -250,6 +255,58 @@ export default function AdminAnalytics() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Heatmap Charts */}
+        {heatmapData && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Tickets by Hour */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Tickets by Hour of Day</h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={heatmapData.by_hour.map((count, hour) => ({ hour: `${hour}:00`, count }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+                  <XAxis dataKey="hour" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="#9CA3AF" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1F2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#F9FAFB'
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#14b8a6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">Peak hours help optimize support team scheduling</p>
+            </div>
+
+            {/* Tickets by Day */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Tickets by Day of Week</h2>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={heatmapData.by_day.map((count, day) => ({
+                  day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][day],
+                  count
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+                  <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="#9CA3AF" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="#9CA3AF" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1F2937',
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                      color: '#F9FAFB'
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">Identify busiest days for resource allocation</p>
             </div>
           </div>
         )}

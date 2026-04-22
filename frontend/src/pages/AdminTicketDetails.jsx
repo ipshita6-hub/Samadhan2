@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AdminNav from "../components/AdminNav";
+import RichTextEditor from "../components/RichTextEditor";
 import { ticketsApi, createTicketSocket } from "../api";
 import { formatDateTime, formatDateOnly } from "../utils/formatDate";
 import {
@@ -305,8 +306,8 @@ export default function AdminTicketDetails() {
                             </div>
                           </div>
                         </div>
-                        <div className={`p-3 rounded-lg text-sm text-gray-700 dark:text-gray-300 ${c.is_internal ? "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800" : c.author_role === "admin" ? "bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800" : "bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600"}`}>
-                          {c.text}
+                        <div className={`p-3 rounded-lg text-sm ${c.is_internal ? "bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800" : c.author_role === "admin" ? "bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800" : "bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600"}`}>
+                          <div className="text-gray-700 dark:text-gray-300 prose prose-sm max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: c.text }} />
                         </div>
                         {/* Reaction bubbles */}
                         {Object.keys(commentReactions).length > 0 && (
@@ -350,12 +351,12 @@ export default function AdminTicketDetails() {
                     Internal note (admin only)
                   </label>
                 </div>
-                <textarea
+                <RichTextEditor
                   value={reply}
-                  onChange={(e) => setReply(e.target.value)}
+                  onChange={setReply}
                   placeholder={isInternal ? "Write an internal note (not visible to student)..." : "Type your response here..."}
-                  rows="4"
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none text-gray-900 dark:text-white ${isInternal ? "border-yellow-300 focus:ring-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-700" : "border-gray-300 dark:border-gray-600 focus:ring-teal-500 bg-white dark:bg-gray-700"}`}
+                  disabled={sending}
+                  className={isInternal ? "internal-note-editor" : ""}
                 />
                 <div className="flex justify-end mt-3">
                   <button

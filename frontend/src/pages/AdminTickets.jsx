@@ -31,6 +31,11 @@ export default function AdminTickets() {
   const [filters, setFilters] = useState({ status: "all", priority: "all", category: "all" });
   const itemsPerPage = 10;
 
+  // Bulk actions
+  const [selectedTickets, setSelectedTickets] = useState(new Set());
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [bulkActionMsg, setBulkActionMsg] = useState(null);
+
   const loadTickets = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -57,6 +62,44 @@ export default function AdminTickets() {
 
   const totalPages = Math.ceil(tickets.length / itemsPerPage);
   const paginated = tickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedTickets(new Set(paginated.map(t => t.id)));
+    } else {
+      setSelectedTickets(new Set());
+    }
+  };
+
+  const handleSelectTicket = (ticketId) => {
+    setSelectedTickets(prev => {
+      const next = new Set(prev);
+      if (next.has(ticketId)) {
+        next.delete(ticketId);
+      } else {
+        next.add(ticketId);
+      }
+      return next;
+    });
+  };
+
+  const handleBulkAction = async (action) => {
+    if (selectedTickets.size === 0) return;
+    if (!window.confirm(`Are you sure you want to ${action} ${selectedTickets.size} ticket(s)?`)) return;
+    
+    setBulkActionLoading(true);
+    setBulkActionMsg(null);
+    try {
+      await ticketsApi.bulkAction(Array.from(selectedTickets), action);
+      setBulkActionMsg({ type: "success", text: `Successfully ${action}d ${selectedTickets.size} ticket(s)` });
+      setSelectedTickets(new Set());
+      await loadTickets();
+    } catch (e) {
+      setBulkActionMsg({ type: "error", text: e.message });
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -110,6 +153,11 @@ export default function AdminTickets() {
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {bulkActionMsg && (
+            <div className={`px-6 py-4 border-b ${bulkActionMsg.type === "success" ? "bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400" : "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"} text-sm`}>
+              {bulkActionMsg.text}
+            </div>
+          )}
           {error && (
             <div className="px-6 py-4 bg-red-50 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">{error}</div>
           )}
@@ -117,6 +165,14 @@ export default function AdminTickets() {
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
+                  <th className="px-6 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={paginated.length > 0 && paginated.every(t => selectedTickets.has(t.id))}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300 text-teal-500 focus:ring-teal-400"
+                    />
+                  </th>
                   {["Ticket", "Student", "Category", "Priority", "Status", "Assigned", "Action"].map((h) => (
                     <th key={h} className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200">{h}</th>
                   ))}
@@ -126,7 +182,7 @@ export default function AdminTickets() {
                 {loading ? (
                   [...Array(5)].map((_, i) => (
                     <tr key={i}>
-                      {[...Array(7)].map((__, j) => (
+                      {[...Array(8)].map((__, j) => (
                         <td key={j} className="px-6 py-4">
                           <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded animate-pulse" />
                         </td>
@@ -135,11 +191,19 @@ export default function AdminTickets() {
                   ))
                 ) : paginated.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No tickets found.</td>
+                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">No tickets found.</td>
                   </tr>
                 ) : (
                   paginated.map((ticket) => (
                     <tr key={ticket.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedTickets.has(ticket.id)}
+                          onChange={() => handleSelectTicket(ticket.id)}
+                          className="rounded border-gray-300 text-teal-500 focus:ring-teal-400"
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <p className="font-medium text-gray-900 dark:text-white max-w-xs truncate">{ticket.title}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{ticket.id.slice(-10).toUpperCase()}</p>
@@ -199,6 +263,46 @@ export default function AdminTickets() {
             </div>
           )}
         </div>
+
+        {/* Bulk Action Bar */}
+        {selectedTickets.size > 0 && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-lg z-40">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                {selectedTickets.size} ticket{selectedTickets.size !== 1 ? "s" : ""} selected
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleBulkAction("resolve")}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition disabled:opacity-50 text-sm font-medium"
+                >
+                  Resolve
+                </button>
+                <button
+                  onClick={() => handleBulkAction("close")}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition disabled:opacity-50 text-sm font-medium"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => handleBulkAction("delete")}
+                  disabled={bulkActionLoading}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50 text-sm font-medium"
+                >
+                  {bulkActionLoading ? "Processing..." : "Delete"}
+                </button>
+                <button
+                  onClick={() => setSelectedTickets(new Set())}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm font-medium"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
