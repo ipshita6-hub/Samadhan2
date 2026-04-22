@@ -84,6 +84,22 @@ export const ticketsApi = {
       method: "POST",
       body: JSON.stringify({ emoji }),
     }),
+
+  rateSatisfaction: (ticketId, rating, feedback = null) =>
+    request(`/api/tickets/${ticketId}/satisfaction`, {
+      method: "POST",
+      body: JSON.stringify({ rating, feedback }),
+    }),
+
+  getHeatmap: () => request("/api/tickets/admin/heatmap"),
+
+  getEstimatedResponseTime: () => request("/api/tickets/estimated-response-time"),
+
+  bulkAction: (ticketIds, action, assignedTo = null) =>
+    request("/api/tickets/bulk-action", {
+      method: "POST",
+      body: JSON.stringify({ ticket_ids: ticketIds, action, assigned_to: assignedTo }),
+    }),
 };
 
 // ── Notifications ─────────────────────────────────────────────────────────────

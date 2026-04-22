@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase";
 import { useAuth } from "../context/AuthContext";
-import { Eye, EyeOff, TicketCheck, User, Shield } from "lucide-react";
+import { Eye, EyeOff, TicketCheck, User, Shield, ArrowLeft } from "lucide-react";
 import axios from "axios";
 
 export default function Signup() {
@@ -33,7 +33,8 @@ export default function Signup() {
       const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const token = await cred.user.getIdToken();
       try {
-        await axios.post("http://localhost:8000/api/auth/register",
+        const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+        await axios.post(`${API_URL}/api/auth/register`,
           { email: formData.email, full_name: formData.fullName, role: formData.role },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -64,7 +65,16 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg w-full max-w-sm px-8 py-10">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg w-full max-w-sm px-8 py-10 relative">
+
+        {/* Back to Home Button */}
+        <button
+          onClick={() => navigate("/")}
+          className="absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+          title="Back to Home"
+        >
+          <ArrowLeft size={20} />
+        </button>
 
         {/* Icon + heading */}
         <div className="flex flex-col items-center mb-7">
