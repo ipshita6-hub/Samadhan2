@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Header, Query, UploadFile, File
 from database import get_db
-from models import TicketCreate, TicketUpdate, CommentCreate, StudentTicketClose, NotificationRead, ReactionToggle
+from models import TicketCreate, TicketUpdate, CommentCreate, StudentTicketClose, NotificationRead, ReactionToggle, SatisfactionRating
 from datetime import datetime
 from bson.objectid import ObjectId
 import firebase_admin
@@ -817,11 +817,10 @@ async def react_to_comment(
 @router.post("/{ticket_id}/satisfaction")
 async def rate_satisfaction(
     ticket_id: str,
-    rating: "SatisfactionRating",
+    rating: SatisfactionRating,
     decoded_token: dict = Depends(verify_firebase_token),
     db=Depends(get_db),
 ):
-    from models import SatisfactionRating
     user = get_current_user(decoded_token, db)
     try:
         ticket = db.tickets.find_one({"_id": ObjectId(ticket_id)})
