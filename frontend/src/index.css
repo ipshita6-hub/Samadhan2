@@ -17,3 +17,84 @@ body {
   @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
   transition: background-color 0.2s, color 0.2s;
 }
+
+/* Prose styles for rich text content */
+.prose {
+  color: inherit;
+}
+
+.prose p {
+  margin-bottom: 0.75em;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.prose strong {
+  font-weight: 600;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose ul, .prose ol {
+  margin-left: 1.5em;
+  margin-bottom: 0.75em;
+}
+
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose ol {
+  list-style-type: decimal;
+}
+
+.prose li {
+  margin-bottom: 0.25em;
+}
+
+.prose blockquote {
+  border-left: 3px solid #14b8a6;
+  padding-left: 1em;
+  margin: 0.75em 0;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.dark .prose blockquote {
+  border-left-color: #14b8a6;
+  color: #9ca3af;
+}
+
+.prose code {
+  background: #f3f4f6;
+  padding: 0.125em 0.25em;
+  border-radius: 0.25em;
+  font-size: 0.875em;
+  font-family: 'Courier New', monospace;
+}
+
+.dark .prose code {
+  background: #374151;
+}
+
+.prose pre {
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+
+.prose a {
+  color: #14b8a6;
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  color: #0d9488;
+}
