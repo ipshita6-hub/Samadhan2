@@ -1,6 +1,6 @@
 import { auth } from "./firebase";
 
-const BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
+const BASE_URL = process.env.REACT_APP_API_URL || "http://13.61.2.10:8000";
 
 async function getAuthHeaders() {
   const user = auth.currentUser;
@@ -139,7 +139,7 @@ export const faqApi = {
 
 // ── WebSocket helper ──────────────────────────────────────────────────────────
 
-const WS_BASE = (process.env.REACT_APP_API_URL || "http://localhost:8000")
+const WS_BASE = (process.env.REACT_APP_API_URL || "http://13.61.2.10:8000")
   .replace(/^http/, "ws");
 
 export function createTicketSocket(ticketId, token, onMessage) {

@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         // Get user role from backend
         try {
           const token = await currentUser.getIdToken();
-          const response = await fetch(`${process.env.REACT_APP_API_URL || "http://localhost:8000"}/api/auth/me`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || "http://13.61.2.10:8000"}/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
             method: "GET",
           });
