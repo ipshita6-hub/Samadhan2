@@ -24,9 +24,10 @@ except Exception as e:
     print(f"⚠ Firebase initialization warning: {str(e)}")
 
 # CORS middleware
+cors_origins = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:3000").split(","),
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -78,6 +79,21 @@ async def ticket_websocket(websocket: WebSocket, ticket_id: str):
     except WebSocketDisconnect:
         manager.disconnect(ticket_id, websocket)
 
+
+@app.get("/")
+def root():
+    return {
+        "message": "Support Ticketing System API",
+        "version": "1.0.0",
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "auth": "/api/auth",
+            "tickets": "/api/tickets",
+            "settings": "/api/settings",
+            "faq": "/api/faq"
+        }
+    }
 
 @app.get("/health")
 def health_check():
