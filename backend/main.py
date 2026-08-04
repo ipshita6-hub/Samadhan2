@@ -96,8 +96,8 @@ def root():
     }
 
 @app.get("/health")
-def health_check():
-    return {"status": "ok"}
+async def health_check():
+    return {"status": "ok", "service": "samadhan-support-tickets"}
 
 if __name__ == "__main__":
     import uvicorn
